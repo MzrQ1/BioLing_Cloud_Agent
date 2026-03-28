@@ -410,9 +410,12 @@ biolid-cloud-agent/
 │   │   └── preprocessing.py      # 数据预处理
 │   │
 │   ├── database/              # 数据持久化
+│   │   ├── database.py        # SQLite连接
+│   │   ├── models.py          # 数据模型
 │   │   ├── vector_store.py    # 向量库 (RAG)
-│   │   ├── feature_store.py    # 特征库
-│   │   └── timeseries.py       # 时序库
+│   │   ├── feature_store.py   # 特征库 (SQLite)
+│   │   ├── timeseries.py      # 时序库 (SQLite)
+│   │   └── checkpoint_store.py # 会话检查点 (内存)
 │   │
 │   └── interfaces/           # 外部接口
 │       ├── api_routes.py     # HTTP API
@@ -421,6 +424,49 @@ biolid-cloud-agent/
 ├── docs/                     # RAG知识库
 ├── tests/                    # 测试
 └── data/                     # 数据存储
+    └── db/
+        ├── biolid.db         # SQLite数据库
+        └── chroma_db/        # 向量数据库
+```
+
+---
+
+## 数据库架构
+
+### 存储策略
+
+| 数据类型 | 存储方式 | 说明 |
+|----------|----------|------|
+| 生理数据 | SQLite | 长期持久化，支持时间范围查询 |
+| 用户画像 | SQLite | 长期记忆，历史统计 |
+| 特征历史 | SQLite | ML提取特征，趋势分析 |
+| 对话历史 | SQLite | 用户交互记录 |
+| 会话检查点 | 内存 | 短期上下文，重启丢失 |
+| RAG知识库 | ChromaDB | 向量检索 |
+
+### 数据表结构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    SQLite (biolid.db)                       │
+├─────────────────┬─────────────────┬─────────────────────────┤
+│ physiological_  │  user_profiles  │   feature_history       │
+│     data        │                 │                         │
+│ ─────────────── │ ─────────────── │ ─────────────────────── │
+│ user_id         │ user_id (PK)    │ user_id                 │
+│ timestamp       │ avg_heart_rate  │ timestamp               │
+│ heart_rate      │ avg_sdnn        │ stress_index            │
+│ ibi_mean        │ avg_stress      │ emotion                 │
+│ sdnn            │ total_sessions  │ risk_level              │
+│ rmssd           │ high_stress_    │ heart_rate              │
+│ stress_index    │   events        │ sdnn, rmssd             │
+│ emotion         │ baseline_hr     │                         │
+│ risk_level      │ baseline_sdnn   │                         │
+├─────────────────┴─────────────────┴─────────────────────────┤
+│              conversation_history                            │
+│ ─────────────────────────────────────────────────────────── │
+│ user_id, session_id, role, content, emotion_state           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -586,6 +632,12 @@ vs.add_document({
 ---
 
 ## 更新日志
+
+### v0.6.0 (2026-03-28)
+- 重构数据库层：SQLite持久化替代内存存储
+- 新增数据表：physiological_data, user_profiles, feature_history, conversation_history
+- 短期上下文保留内存存储（CheckpointStore）
+- 长期数据全部持久化到SQLite
 
 ### v0.5.1 (2026-03-28)
 - 更新部署指南：使用pyenv管理Python版本（推荐3.11.9）

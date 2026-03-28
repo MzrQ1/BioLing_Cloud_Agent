@@ -7,6 +7,7 @@ import logging
 from app.config import config
 from app.interfaces.api_routes import router, set_agent_instance
 from app.agent.graph import create_health_agent_graph
+from app.database import init_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,6 +18,13 @@ _agent_graph = None
 async def lifespan(app: FastAPI):
     global _agent_graph
     logger.info("正在初始化BioLing Cloud Agent...")
+
+    try:
+        logger.info("正在初始化SQLite数据库...")
+        init_db()
+        logger.info("SQLite数据库初始化完成")
+    except Exception as e:
+        logger.error(f"数据库初始化失败: {e}")
 
     try:
         _agent_graph = create_health_agent_graph()
