@@ -25,7 +25,273 @@
 
 ---
 
-## 快速部署
+## 阿里云服务器部署指南
+
+### 前置条件
+
+- 阿里云ECS实例（推荐配置：2核4G及以上）
+- 操作系统：Ubuntu 20.04/22.04 或 CentOS 7/8
+- 安全组开放端口：8000（API）、1883（MQTT）、11434（Ollama）
+
+### 步骤一：服务器环境准备
+
+```bash
+# 更新系统
+sudo apt update && sudo apt upgrade -y
+
+# 安装Python 3.10+
+sudo apt install -y python3.10 python3.10-venv python3-pip
+
+# 安装Git
+sudo apt install -y git
+
+# 安装Docker（可选，用于Docker部署）
+curl -fsSL https://get.docker.com | bash
+sudo usermod -aG docker $USER
+```
+
+### 步骤二：获取代码
+
+```bash
+# 克隆仓库
+git clone https://github.com/MzrQ1/BioLing_Cloud_Agent.git
+cd BioLing_Cloud_Agent
+```
+
+### 步骤三：安装Ollama（Embedding服务）
+
+```bash
+# 安装Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# 启动Ollama服务
+ollama serve &
+
+# 下载Embedding模型
+ollama pull nomic-embed-text
+
+# 验证安装
+ollama list
+```
+
+### 步骤四：配置项目
+
+```bash
+# 创建虚拟环境
+python3 -m venv venv
+source venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 创建配置文件
+cp .env.example .env
+```
+
+### 步骤五：编辑配置文件
+
+```bash
+nano .env
+```
+
+**必须修改的配置：**
+
+```bash
+# 阿里云千问API密钥（必填）
+DASHSCOPE_API_KEY=sk-xxxxxxxxxxxxxxxx
+
+# 服务器公网IP或域名
+MQTT_BROKER=0.0.0.0
+
+# Ollama地址（本地部署）
+EMBEDDING_API_BASE=http://localhost:11434
+```
+
+**可选修改的配置：**
+
+```bash
+# 对话模型配置
+LLM_PROVIDER=dashscope
+LLM_DIALOG_MODEL=qwen2.5-7b-instruct
+LLM_TEMPERATURE=0.7
+
+# RAG配置
+RAG_ENABLE_HYBRID_SEARCH=true
+RAG_ENABLE_RERANK=true
+```
+
+### 步骤六：启动服务
+
+**方式一：直接启动（开发/测试）**
+
+```bash
+# 启动API服务
+cd app
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+**方式二：后台运行（生产环境）**
+
+```bash
+# 使用nohup后台运行
+nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > logs/app.log 2>&1 &
+
+# 查看日志
+tail -f logs/app.log
+```
+
+**方式三：使用Supervisor（推荐生产环境）**
+
+```bash
+# 安装Supervisor
+sudo apt install -y supervisor
+
+# 创建配置文件
+sudo nano /etc/supervisor/conf.d/biolid.conf
+```
+
+配置内容：
+```ini
+[program:biolid]
+directory=/root/BioLing_Cloud_Agent
+command=/root/BioLing_Cloud_Agent/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+user=root
+autostart=true
+autorestart=true
+startsecs=10
+stopwaitsecs=60
+redirect_stderr=true
+stdout_logfile=/root/BioLing_Cloud_Agent/logs/app.log
+```
+
+启动服务：
+```bash
+# 创建日志目录
+mkdir -p logs
+
+# 重新加载配置
+sudo supervisorctl reread
+sudo supervisorctl update
+
+# 启动服务
+sudo supervisorctl start biolid
+
+# 查看状态
+sudo supervisorctl status
+```
+
+**方式四：Docker部署**
+
+```bash
+# 构建并启动
+docker-compose up -d --build
+
+# 查看日志
+docker-compose logs -f app
+
+# 停止服务
+docker-compose down
+```
+
+### 步骤七：验证部署
+
+```bash
+# 健康检查
+curl http://localhost:8000/api/v1/health
+
+# 查看API文档
+# 浏览器访问：http://<服务器公网IP>:8000/docs
+```
+
+### 步骤八：配置安全组
+
+在阿里云控制台配置安全组规则：
+
+| 端口 | 协议 | 用途 | 来源 |
+|------|------|------|------|
+| 8000 | TCP | API服务 | 0.0.0.0/0 或指定IP |
+| 1883 | TCP | MQTT | ESP32设备IP |
+| 11434 | TCP | Ollama | 127.0.0.1（仅本地） |
+| 22 | TCP | SSH | 管理员IP |
+
+### 步骤九：ESP32连接配置
+
+ESP32代码中修改服务器地址：
+
+```cpp
+const char* mqtt_server = "你的服务器公网IP";
+const int mqtt_port = 1883;
+const char* mqtt_topic = "biolid/esp32/sensor_data";
+```
+
+### 常见问题
+
+**Q: Ollama连接失败**
+```bash
+# 检查Ollama服务状态
+systemctl status ollama
+
+# 重启Ollama
+ollama serve &
+
+# 测试连接
+curl http://localhost:11434/api/tags
+```
+
+**Q: API无法访问**
+```bash
+# 检查端口占用
+netstat -tlnp | grep 8000
+
+# 检查防火墙
+sudo ufw status
+sudo ufw allow 8000
+```
+
+**Q: 内存不足**
+```bash
+# 查看内存使用
+free -h
+
+# 创建交换空间
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+### 部署架构图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      阿里云ECS服务器                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Ollama    │  │   FastAPI   │  │      ChromaDB       │  │
+│  │  (Embedding)│  │  (Port 8000)│  │    (向量数据库)      │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│         │                │                    │              │
+│         └────────────────┼────────────────────┘              │
+│                          │                                   │
+│  ┌───────────────────────┴───────────────────────────────┐  │
+│  │              BioLing Cloud Agent                       │  │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────┐  │  │
+│  │  │ LangGraph│ │   RAG   │ │   ML    │ │  千问API    │  │  │
+│  │  │  Agent  │ │ 混合检索 │ │  推理   │ │ (DashScope) │  │  │
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────────┘  │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+         ▲                                    ▲
+         │ MQTT                               │ HTTPS
+         │                                    │
+┌────────┴────────┐                  ┌────────┴────────┐
+│     ESP32-S3    │                  │    Web前端      │
+│   (生理数据采集) │                  │  (用户交互界面)  │
+└─────────────────┘                  └─────────────────┘
+```
+
+---
+
+## 快速部署（本地开发）
 
 ### 1. 安装依赖
 
@@ -53,7 +319,7 @@ EMBEDDING_MODEL=nomic-embed-text
 EMBEDDING_API_BASE=http://localhost:11434
 ```
 
-### 3. 启动Embedding服务（如需本地）
+### 3. 启动Embedding服务
 
 ```bash
 ollama serve
@@ -62,15 +328,9 @@ ollama pull nomic-embed-text
 
 ### 4. 启动服务
 
-**开发模式：**
 ```bash
 cd app
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**Docker模式：**
-```bash
-docker-compose up -d
 ```
 
 ---
@@ -256,19 +516,73 @@ workflow.add_edge("source_node", "new_node")
 
 ## RAG 配置
 
-向量数据库（默认Chroma）：
+### 混合检索 + Rerank
+
+系统支持**向量检索 + BM25关键词检索**混合检索，以及**Cross-Encoder Rerank**重排序：
+
+```
+Query → 向量检索 ─┬→ 分数融合 → Rerank → Top-K结果
+                  │
+       BM25检索 ──┘
+```
+
+### 配置参数
 
 ```bash
+# 向量数据库
 VECTOR_STORE_TYPE=chroma
 CHROMA_PERSIST_PATH=./data/db/chroma_db
 RAG_TOP_K=5
+RAG_SIMILARITY_THRESHOLD=0.7
+
+# 混合检索
+RAG_ENABLE_HYBRID_SEARCH=true    # 启用混合检索
+RAG_HYBRID_ALPHA=0.5             # 向量权重（0-1，BM25权重=1-alpha）
+
+# Rerank重排序
+RAG_ENABLE_RERANK=true           # 启用Rerank
+RAG_RERANK_MODEL=BAAI/bge-reranker-base  # Rerank模型
+RAG_RERANK_TOP_K=3               # Rerank后返回数量
 ```
 
-添加知识库文档到 `docs/` 目录（.txt文件自动加载）。
+### 检索策略对比
+
+| 策略 | 说明 | 适用场景 |
+|------|------|----------|
+| 纯向量检索 | 语义相似度 | 概念匹配 |
+| 纯BM25 | 关键词匹配 | 精确术语 |
+| 混合检索 | 向量+BM25融合 | 通用场景（推荐） |
+| 混合+Rerank | 混合检索后重排序 | 高精度需求 |
+
+### 添加知识库
+
+将 `.txt` 文件放入 `docs/` 目录自动加载，或代码添加：
+
+```python
+from app.database.vector_store import VectorStore
+
+vs = VectorStore()
+vs.add_document({
+    "id": "custom_001",
+    "category": "stress_management",
+    "content": "正念练习：每日冥想10分钟可降低皮质醇水平"
+})
+```
 
 ---
 
 ## 更新日志
+
+### v0.5.0 (2026-03-28)
+- 新增阿里云服务器完整部署指南
+- 添加Supervisor生产环境部署方案
+- 添加部署架构图和常见问题解答
+
+### v0.4.0 (2026-03-28)
+- 新增BM25关键词检索模块
+- 实现混合检索（向量+BM25分数融合）
+- 实现Rerank重排序（Cross-Encoder）
+- 新增RAG配置参数支持
 
 ### v0.3.0 (2026-03-24)
 - 对话模型默认使用阿里云DashScope千问API

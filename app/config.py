@@ -46,6 +46,13 @@ class RAGConfig:
 
     KNOWLEDGE_BASE_PATH: str = str(BASE_DIR / "docs")
 
+    ENABLE_HYBRID_SEARCH: bool = os.getenv("RAG_ENABLE_HYBRID_SEARCH", "true").lower() == "true"
+    HYBRID_ALPHA: float = float(os.getenv("RAG_HYBRID_ALPHA", "0.5"))
+
+    ENABLE_RERANK: bool = os.getenv("RAG_ENABLE_RERANK", "true").lower() == "true"
+    RERANK_MODEL: str = os.getenv("RAG_RERANK_MODEL", "BAAI/bge-reranker-base")
+    RERANK_TOP_K: int = int(os.getenv("RAG_RERANK_TOP_K", "3"))
+
     @classmethod
     def to_dict(cls) -> Dict[str, Any]:
         return {
@@ -54,7 +61,12 @@ class RAGConfig:
             "chroma_collection_name": cls.CHROMA_COLLECTION_NAME,
             "top_k": cls.TOP_K,
             "similarity_threshold": cls.SIMILARITY_THRESHOLD,
-            "knowledge_base_path": cls.KNOWLEDGE_BASE_PATH
+            "knowledge_base_path": cls.KNOWLEDGE_BASE_PATH,
+            "enable_hybrid_search": cls.ENABLE_HYBRID_SEARCH,
+            "hybrid_alpha": cls.HYBRID_ALPHA,
+            "enable_rerank": cls.ENABLE_RERANK,
+            "rerank_model": cls.RERANK_MODEL,
+            "rerank_top_k": cls.RERANK_TOP_K
         }
 
 class Config:
