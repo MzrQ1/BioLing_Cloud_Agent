@@ -39,26 +39,29 @@
 # 更新系统
 sudo apt update && sudo apt upgrade -y
 
-# 安装Python 3.10+
-sudo apt install -y python3.10 python3.10-venv python3-pip
+# 安装依赖
+sudo apt install -y build-essential libssl-dev zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev curl \
+    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev git
 
-# 安装Git
-sudo apt install -y git
+# 安装pyenv（Python版本管理）
+curl https://pyenv.run | bash
+
+# 配置pyenv环境变量
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+source ~/.bashrc
+
+# 安装Python 3.11（推荐，兼容性最佳）
+pyenv install 3.11.9
 
 # 安装Docker（可选，用于Docker部署）
 curl -fsSL https://get.docker.com | bash
 sudo usermod -aG docker $USER
 ```
 
-### 步骤二：获取代码
-
-```bash
-# 克隆仓库
-git clone https://github.com/MzrQ1/BioLing_Cloud_Agent.git
-cd BioLing_Cloud_Agent
-```
-
-### 步骤三：安装Ollama（Embedding服务）
+### 步骤二：安装Ollama（Embedding服务）
 
 ```bash
 # 安装Ollama
@@ -74,21 +77,32 @@ ollama pull nomic-embed-text
 ollama list
 ```
 
-### 步骤四：配置项目
+### 步骤三：配置项目
 
 ```bash
+# 克隆仓库
+git clone https://github.com/MzrQ1/BioLing_Cloud_Agent.git
+cd BioLing_Cloud_Agent
+
+# 设置项目Python版本为3.11
+pyenv local 3.11.9
+
+# 验证Python版本
+python --version  # 应显示 Python 3.11.9
+
 # 创建虚拟环境
-python3 -m venv venv
+python -m venv venv
 source venv/bin/activate
 
 # 安装依赖
+pip install --upgrade pip
 pip install -r requirements.txt
 
 # 创建配置文件
 cp .env.example .env
 ```
 
-### 步骤五：编辑配置文件
+### 步骤四：编辑配置文件
 
 ```bash
 nano .env
@@ -120,7 +134,7 @@ RAG_ENABLE_HYBRID_SEARCH=true
 RAG_ENABLE_RERANK=true
 ```
 
-### 步骤六：启动服务
+### 步骤五：启动服务
 
 **方式一：直接启动（开发/测试）**
 
@@ -193,7 +207,7 @@ docker-compose logs -f app
 docker-compose down
 ```
 
-### 步骤七：验证部署
+### 步骤六：验证部署
 
 ```bash
 # 健康检查
@@ -203,7 +217,7 @@ curl http://localhost:8000/api/v1/health
 # 浏览器访问：http://<服务器公网IP>:8000/docs
 ```
 
-### 步骤八：配置安全组
+### 步骤七：配置安全组
 
 在阿里云控制台配置安全组规则：
 
@@ -214,7 +228,7 @@ curl http://localhost:8000/api/v1/health
 | 11434 | TCP | Ollama | 127.0.0.1（仅本地） |
 | 22 | TCP | SSH | 管理员IP |
 
-### 步骤九：ESP32连接配置
+### 步骤八：ESP32连接配置
 
 ESP32代码中修改服务器地址：
 
@@ -572,6 +586,11 @@ vs.add_document({
 ---
 
 ## 更新日志
+
+### v0.5.1 (2026-03-28)
+- 更新部署指南：使用pyenv管理Python版本（推荐3.11.9）
+- 修复requirements.txt依赖版本兼容性问题
+- 限制numpy<2.0.0和chromadb版本范围
 
 ### v0.5.0 (2026-03-28)
 - 新增阿里云服务器完整部署指南
