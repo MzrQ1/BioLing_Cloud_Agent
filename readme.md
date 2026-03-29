@@ -616,7 +616,30 @@ RAG_RERANK_TOP_K=3               # Rerank后返回数量
 
 ### 添加知识库
 
-将 `.txt` 文件放入 `docs/` 目录自动加载，或代码添加：
+**方式一：文件导入（推荐）**
+
+1. 准备 `.txt` 文件，每段知识用空行分隔：
+```
+深呼吸是最简单有效的减压方法。尝试4-7-8呼吸法...
+
+渐进式肌肉放松训练（PMR）可有效缓解身体紧张...
+```
+
+2. 放入 `docs/` 目录：
+```
+biolid-cloud-agent/
+├── docs/
+│   ├── stress_management.txt    # 压力管理知识
+│   ├── sleep_hygiene.txt        # 睡眠卫生知识
+│   └── exercise_tips.txt        # 运动建议
+```
+
+3. 运行导入脚本：
+```bash
+python scripts/import_knowledge.py --import
+```
+
+**方式二：代码添加**
 
 ```python
 from app.database.vector_store import VectorStore
@@ -629,9 +652,23 @@ vs.add_document({
 })
 ```
 
+**管理命令**：
+```bash
+# 查看知识库统计
+python scripts/import_knowledge.py --stats
+
+# 测试检索效果
+python scripts/import_knowledge.py --test "如何缓解压力"
+```
+
 ---
 
 ## 更新日志
+
+### v0.6.1 (2026-03-28)
+- 新增RAG知识库导入脚本 scripts/import_knowledge.py
+- 支持批量导入.txt文件到向量数据库
+- 添加知识库统计和测试查询功能
 
 ### v0.6.0 (2026-03-28)
 - 重构数据库层：SQLite持久化替代内存存储
