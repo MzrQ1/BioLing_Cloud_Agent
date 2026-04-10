@@ -41,7 +41,8 @@ class LLMCaller:
                 temperature=kwargs.get("temperature", LLMConfig.TEMPERATURE),
                 max_tokens=kwargs.get("max_tokens", LLMConfig.MAX_TOKENS)
             )
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+            return content if content else "抱歉，模型未返回有效内容。"
         except Exception as e:
             return f"LLM调用失败: {str(e)}"
 
@@ -61,7 +62,8 @@ class LLMCaller:
                 temperature=kwargs.get("temperature", LLMConfig.TEMPERATURE),
                 max_tokens=kwargs.get("max_tokens", LLMConfig.MAX_TOKENS)
             )
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+            return content if content else "抱歉，模型未返回有效内容。"
         except Exception as e:
             return f"LLM调用失败: {str(e)}"
 
@@ -174,8 +176,146 @@ class EmbeddingCaller:
         return embeddings
 
 def llm_call(prompt: str, model: Optional[str] = None) -> str:
-    """调用LLM生成文本（兼容旧接口）"""
-    return LLMCaller.call(prompt, model)
+    """调用LLM生成文本（兼容旧接口，使用大模型）"""
+    result = LLMCaller.call(prompt, model)
+    if result is None:
+        return "抱歉，模型暂时无法响应，请稍后重试。"
+    return result
+
+
+def llm_call_stream(prompt: str, model: Optional[str] = None):
+    """
+    流式调用大模型（生成器）
+
+    使用 DashScope API 的流式输出
+
+    Yields:
+        str: 逐步生成的文本片段
+    """
+    model = model or LLMConfig.DIALOG_MODEL
+    api_key = LLMConfig.DIALOG_API_KEY
+    api_base = LLMConfig.DIALOG_API_BASE
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key, base_url=api_base)
+
+        stream = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=LLMConfig.TEMPERATURE,
+            max_tokens=LLMConfig.MAX_TOKENS,
+            stream=True
+        )
+
+        for chunk in stream:
+            content = chunk.choices[0].delta.content
+            if content:
+                yield content
+
+    except Exception as e:
+        print(f"[流式大模型调用错误] {str(e)}")
+        yield f"抱歉，生成内容时出现错误：{str(e)}"
+
+
+def llm_call_simple(prompt: str, model: Optional[str] = None) -> str:
+    """
+    调用本地小模型进行简单对话（节省成本和延迟）
+
+    使用 Ollama 本地部署的模型，适合简单问答和闲聊
+
+    参数：
+        prompt: 提示词
+        model: 模型名称，默认使用配置的 OLLAMA_LLM_MODEL
+
+    返回：
+        模型生成的文本，失败时返回空字符串
+    """
+    model = model or LLMConfig.OLLAMA_LLM_MODEL or "qwen2.5:latest"
+    api_base = LLMConfig.EMBEDDING_API_BASE or "http://localhost:11434"
+
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": 0.7,
+            "num_predict": 200
+        }
+    }
+
+    try:
+        import urllib.request
+        import urllib.error
+
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            f"{api_base}/api/generate",
+            data=data,
+            headers={"Content-Type": "application/json"}
+        )
+
+        with urllib.request.urlopen(req, timeout=30) as response:
+            result = json.loads(response.read().decode("utf-8"))
+            response_text = result.get("response", "").strip()
+            if response_text:
+                return response_text
+            return ""
+
+    except urllib.error.URLError as e:
+        print(f"[小模型调用] Ollama 连接失败: {str(e)}")
+        return ""
+    except Exception as e:
+        print(f"[小模型调用] 错误: {str(e)}")
+        return ""
+
+
+def llm_call_simple_stream(prompt: str, model: Optional[str] = None):
+    """
+    流式调用本地小模型（生成器）
+
+    使用 Ollama 本地部署的模型，支持流式输出
+
+    Yields:
+        str: 逐步生成的文本片段
+    """
+    model = model or LLMConfig.OLLAMA_LLM_MODEL or "qwen2.5:latest"
+    api_base = LLMConfig.EMBEDDING_API_BASE or "http://localhost:11434"
+
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": True
+    }
+
+    try:
+        import urllib.request
+        import urllib.error
+
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            f"{api_base}/api/generate",
+            data=data,
+            headers={"Content-Type": "application/json"}
+        )
+
+        with urllib.request.urlopen(req, timeout=60) as response:
+            for line in response:
+                if line:
+                    try:
+                        result = json.loads(line.decode("utf-8"))
+                        content = result.get("response", "")
+                        if content:
+                            yield content
+                    except json.JSONDecodeError:
+                        continue
+
+    except urllib.error.URLError as e:
+        print(f"[流式小模型调用] Ollama 连接失败: {str(e)}")
+        yield "抱歉，无法连接到本地模型。"
+    except Exception as e:
+        print(f"[流式小模型调用] 错误: {str(e)}")
+        yield f"抱歉，生成内容时出现错误：{str(e)}"
 
 def format_sensor_data(raw_data: dict) -> dict:
     """格式化传感器数据"""

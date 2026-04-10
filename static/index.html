@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioLid Cloud Agent - 健康智能管家</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-input);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Auth Pages */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 200px);
+        }
+
+        .auth-card {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-title h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .auth-title p {
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+        }
+
+        .form-error {
+            color: var(--danger);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+
+        .auth-switch a {
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            border-left: 3px solid var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Chat */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-avatar {
+            background: var(--primary);
+        }
+
+        .message.user .message-avatar {
+            background: var(--success);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+        }
+
+        .message.bot .message-content {
+            background: var(--bg-input);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user .message-content {
+            background: var(--primary);
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-input-area {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .chat-send {
+            width: 45px;
+            height: 45px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: var(--bg-input);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* Vital Signs */
+        .vital-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--bg-input);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .vital-label {
+            color: var(--text-secondary);
+        }
+
+        .vital-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .vital-status {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .status-normal { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .status-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .status-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        /* Memory List */
+        .memory-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .memory-item {
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .memory-score {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .score-high { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .score-medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .score-low { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .memory-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--bg-input);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: var(--bg-input);
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Hidden */
+        .hidden { display: none !important; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Page -->
+        <div id="loginPage" class="container">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-title">
+                        <h1>🏥 BioLid</h1>
+                        <p>健康智能管家 - 请登录您的账户</p>
+                    </div>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">密码</label>
+                            <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+                        </div>
+                        <div id="loginError" class="form-error hidden"></div>
+                        <button type="submit" class="btn btn-primary" style="width:100%">登录</button>
+                    </form>
+                    <div class="auth-switch">
+                        还没有账户？<a onclick="showRegister()">立即注册</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Page -->
+        <div id="registerPage" class="container hidden">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-title">
+                        <h1>📝 注册账户</h1>
+                        <p>创建您的新账户</p>
+                    </div>
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-input" id="regUsername" placeholder="请输入用户名" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">昵称（可选）</label>
+                            <input type="text" class="form-input" id="regNickname" placeholder="您的昵称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">密码</label>
+                            <input type="password" class="form-input" id="regPassword" placeholder="请输入密码" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">确认密码</label>
+                            <input type="password" class="form-input" id="regPasswordConfirm" placeholder="再次输入密码" required>
+                        </div>
+                        <div id="registerError" class="form-error hidden"></div>
+                        <button type="submit" class="btn btn-primary" style="width:100%">注册</button>
+                    </form>
+                    <div class="auth-switch">
+                        已有账户？<a onclick="showLogin()">返回登录</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App -->
+        <div id="mainApp" class="hidden">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo">
+                    <div class="logo-icon">🏥</div>
+                    <span>BioLid Cloud Agent</span>
+                </div>
+                <div class="user-info">
+                    <span id="displayUsername">用户</span>
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <button class="btn btn-outline" onclick="logout()">退出</button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-layout">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="nav-item active" data-page="chat" onclick="switchPage('chat')">
+                        <span class="nav-icon">💬</span>
+                        <span>智能对话</span>
+                    </div>
+                    <div class="nav-item" data-page="dashboard" onclick="switchPage('dashboard')">
+                        <span class="nav-icon">📊</span>
+                        <span>健康仪表盘</span>
+                    </div>
+                    <div class="nav-item" data-page="data" onclick="switchPage('data')">
+                        <span class="nav-icon">📈</span>
+                        <span>生理数据</span>
+                    </div>
+                    <div class="nav-item" data-page="memory" onclick="switchPage('memory')">
+                        <span class="nav-icon">🧠</span>
+                        <span>记忆管理</span>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="content-area">
+                    <!-- Chat Page -->
+                    <div id="chatPage" class="page chat-container">
+                        <div class="chat-header">
+                            <strong>💬 健康管家助手</strong>
+                            <span style="color:var(--text-secondary)">在线</span>
+                        </div>
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message bot">
+                                <div class="message-avatar">🤖</div>
+                                <div class="message-content">
+                                    您好！我是 BioLid 健康管家，可以帮您：<br><br>
+                                    • 查看和分析您的健康数据<br>
+                                    • 提供个性化的健康建议<br>
+                                    • 解答关于压力管理的疑问<br><br>
+                                    请问有什么可以帮助您的？
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="chatInput" 
+                                   placeholder="输入您的问题..." onkeypress="handleKeyPress(event)">
+                            <button class="chat-send" onclick="sendMessage()">➤</button>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Page -->
+                    <div id="dashboardPage" class="page hidden">
+                        <div class="dashboard">
+                            <!-- Health Summary Card -->
+                            <div class="card" style="grid-column: span 2;">
+                                <div class="card-header">
+                                    <span class="card-title">📋 健康概览</span>
+                                    <span id="reportTime"></span>
+                                </div>
+                                <div id="healthSummary">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">📊</div>
+                                        <p>暂无健康数据</p>
+                                        <p style="font-size:12px;margin-top:10px">连接设备后数据将自动更新</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Vitals Card -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <span class="card-title">❤️ 生命体征</span>
+                                </div>
+                                <div id="vitalsData">
+                                    <div class="vital-item">
+                                        <div>
+                                            <div class="vital-label">心率 (HR)</div>
+                                            <div class="vital-value">-- bpm</div>
+                                        </div>
+                                        <span class="vital-status status-normal">--</span>
+                                    </div>
+                                    <div class="vital-item">
+                                        <div>
+                                            <div class="vital-label">心率变异性 (SDNN)</div>
+                                            <div class="vital-value">-- ms</div>
+                                        </div>
+                                        <span class="vital-status status-normal">--</span>
+                                    </div>
+                                    <div class="vital-item">
+                                        <div>
+                                            <div class="vital-label">RMSSD</div>
+                                            <div class="vital-value">-- ms</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Statistics Card -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <span class="card-title">📈 统计数据</span>
+                                </div>
+                                <div class="stats-grid" id="statsData">
+                                    <div class="stat-item">
+                                        <div class="stat-value">0</div>
+                                        <div class="stat-label">监测次数</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">0</div>
+                                        <div class="stat-label">高压事件</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">0</div>
+                                        <div class="stat-label">数据点/24h</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">0</div>
+                                        <div class="stat-label">记忆条数</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Suggestion Card -->
+                            <div class="card" style="grid-column: span 2;">
+                                <div class="card-header">
+                                    <span class="card-title">💡 健康建议</span>
+                                </div>
+                                <div id="suggestionContent">
+                                    <p style="color:var(--text-secondary)">暂无建议</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Page -->
+                    <div id="dataPage" class="page hidden">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">📈 生理数据趋势</span>
+                                <select id="timeRangeSelect" onchange="loadPhysioData()" 
+                                        style="background:var(--bg-input);color:var(--text-primary);border:none;padding:5px 10px;border-radius:5px;">
+                                    <option value="24h">最近24小时</option>
+                                    <option value="7d">最近7天</option>
+                                    <option value="30d">最近30天</option>
+                                </select>
+                            </div>
+                            <div id="physioDataContent">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">📈</div>
+                                    <p>暂无生理数据记录</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Memory Page -->
+                    <div id="memoryPage" class="page hidden">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">🧠 对话记忆</span>
+                                <span id="memoryStats" style="font-size:12px;color:var(--text-secondary)"></span>
+                            </div>
+                            <div class="memory-list" id="memoryList">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">🧠</div>
+                                    <p>暂无记忆数据</p>
+                                    <p style="font-size:12px;margin-top:10px">与助手对话后，重要信息将被保存</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentUser = null;
+        let sessionId = null;
+
+        // API Base URL
+        const API_BASE = '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            setupForms();
+        });
+
+        function setupForms() {
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+        }
+
+        async function checkAuth() {
+            const cookies = document.cookie.split(';').reduce((acc, c) => {
+                const [k, v] = c.trim().split('=');
+                acc[k] = v;
+                return acc}, {});
+            
+            sessionId = cookies.session_id;
+
+            if (sessionId) {
+                try {
+                    const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
+                        headers: { 'X-Session-ID': sessionId }
+                    });
+                    if (res.ok) {
+                        currentUser = await res.json();
+                        showMainApp();
+                    } else {
+                        showLogin();
+                    }
+                } catch (e) {
+                    showLogin();
+                }
+            } else {
+                showLogin();
+            }
+        }
+
+        // Auth Functions
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+
+            try {
+                const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    currentUser = data;
+                    sessionId = data.session_id;
+                    showMainApp();
+                } else {
+                    errorEl.textContent = data.detail || '登录失败';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorEl.textContent = '网络错误，请重试';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regPasswordConfirm').value;
+            const nickname = document.getElementById('regNickname').value;
+            const errorEl = document.getElementById('registerError');
+
+            if (password !== confirm) {
+                errorEl.textContent = '两次密码不一致';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, nickname })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('注册成功！请登录');
+                    showLogin();
+                } else {
+                    errorEl.textContent = data.detail || '注册失败';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorEl.textContent = '网络错误，请重试';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch(`${API_BASE}/api/v1/auth/logout`, { method: 'POST' });
+            } catch (e) {}
+            currentUser = null;
+            sessionId = null;
+            showLogin();
+        }
+
+        // UI Functions
+        function showLogin() {
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('registerPage').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('registerPage').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('registerPage').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+
+            if (currentUser) {
+                document.getElementById('displayUsername').textContent = 
+                    currentUser.nickname || currentUser.username;
+                document.getElementById('userAvatar').textContent = 
+                    (currentUser.nickname || currentUser.username)[0].toUpperCase();
+            }
+
+            loadDashboard();
+        }
+
+        function switchPage(pageName) {
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.page === pageName);
+            });
+
+            document.querySelectorAll('.page').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            document.getElementById(pageName + 'Page').classList.remove('hidden');
+
+            if (pageName === 'dashboard') loadDashboard();
+            if (pageName === 'data') loadPhysioData();
+            if (pageName === 'memory') loadMemoryData();
+        }
+
+        // Chat Functions
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            input.value = '';
+
+            const messagesContainer = document.getElementById('chatMessages');
+
+            const botMsgDiv = document.createElement('div');
+            botMsgDiv.className = 'message bot';
+            botMsgDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content"><span class="streaming-text"></span><span class="loading-dots">...</span></div>
+            `;
+            messagesContainer.appendChild(botMsgDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            const streamingSpan = botMsgDiv.querySelector('.streaming-text');
+            const loadingDots = botMsgDiv.querySelector('.loading-dots');
+
+            try {
+                const sessionIdToUse = sessionId || '';
+                const res = await fetch(`${API_BASE}/api/v1/web/chat/stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-ID': sessionIdToUse
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n').filter(l => l.trim());
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (!data.done) {
+                                    streamingSpan.textContent += data.content;
+                                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                }
+
+                loadingDots.remove();
+
+            } catch (err) {
+                console.error('Stream error:', err);
+                streamingSpan.textContent = '网络错误，请稍后重试';
+                loadingDots.remove();
+            }
+        }
+
+        function appendMessage(content, role) {
+            const container = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+            
+            const avatar = role === 'bot' ? '🤖' : 
+                (currentUser ? (currentUser.nickname || currentUser.username)[0] : 'U');
+            
+            msgDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+            `;
+            
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Dashboard Functions
+        async function loadDashboard() {
+            if (!currentUser) return;
+
+            try {
+                const res = await fetch(
+                    `${API_BASE}/api/v1/web/report/${currentUser.user_id}`,
+                    { headers: { 'X-Session-ID': sessionId || '' } }
+                );
+                const report = await res.json();
+
+                updateHealthSummary(report);
+                updateVitals(report);
+                updateStats(report);
+                updateSuggestion(report);
+            } catch (err) {
+                console.error('Load dashboard error:', err);
+            }
+        }
+
+        function updateHealthSummary(report) {
+            const container = document.getElementById('healthSummary');
+            
+            if (!report.has_data) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <p>${report.message || '暂无健康数据'}</p>
+                        <p style="font-size:12px;margin-top:10px">连接设备后数据将自动更新</p>
+                    </div>`;
+                return;
+            }
+
+            const s = report.summary || {};
+            const trendIcons = { stable: '➡️', increasing: '⬆️', decreasing: '⬇️' };
+
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" style="color:${s.risk_color || '#6b7280'}">${s.stress_level || 0}</div>
+                        <div class="stat-label">压力指数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${s.risk_level || '--'}</div>
+                        <div class="stat-label">风险等级 ${trendIcons[s.stress_trend] || ''}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${s.overall_status || '--'}</div>
+                        <div class="stat-label">整体状态</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${s.stress_trend === 'increasing' ? '上升' : s.stress_trend === 'decreasing' ? '下降' : '稳定'}</div>
+                        <div class="stat-label">趋势</div>
+                    </div>
+                </div>`;
+        }
+
+        function updateVitals(report) {
+            const container = document.getElementById('vitalsData');
+            const vitals = report.vitals || {};
+
+            container.innerHTML = Object.entries(vitals).map(([key, val]) => {
+                const labels = { heart_rate: '心率 (HR)', sdnn: '心率变异性 (SDNN)', rmssd: 'RMSSD' };
+                const units = val.unit || '';
+                const statusClass = val.status === 'normal' ? 'status-normal' : 
+                                  val.status === 'abnormal' ? 'status-danger' : 'status-normal';
+                const statusText = val.status === 'normal' ? '正常' : val.status === 'abnormal' ? '异常' : '';
+
+                return `
+                    <div class="vital-item">
+                        <div>
+                            <div class="vital-label">${labels[key] || key}</div>
+                            <div class="vital-value">${val.value || '--'} ${units}</div>
+                        </div>
+                        ${statusText ? `<span class="vital-status ${statusClass}">${statusText}</span>` : ''}
+                    </div>`;
+            }).join('');
+        }
+
+        function updateStats(report) {
+            const stats = report.statistics || {};
+            const container = document.getElementById('statsData');
+
+            container.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${stats.total_sessions || 0}</div>
+                    <div class="stat-label">监测次数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.high_stress_events || 0}</div>
+                    <div class="stat-label">高压事件</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.data_points_24h || 0}</div>
+                    <div class="stat-label">数据点/24h</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.memory_count || 0}</div>
+                    <div class="stat-label">记忆条数</div>
+                </div>`;
+        }
+
+        function updateSuggestion(report) {
+            const container = document.getElementById('suggestionContent');
+            container.innerHTML = `<p>${report.suggestion || '暂无建议'}</p>`;
+        }
+
+        // Data Functions
+        async function loadPhysioData() {
+            if (!currentUser) return;
+
+            const timeRange = document.getElementById('timeRangeSelect').value;
+
+            try {
+                const res = await fetch(
+                    `${API_BASE}/api/v1/web/data/physiological/${currentUser.user_id}?time_range=${timeRange}`,
+                    { headers: { 'X-Session-ID': sessionId || '' } }
+                );
+                const data = await res.json();
+
+                updatePhysioChart(data);
+            } catch (err) {
+                console.error('Load physio data error:', err);
+            }
+        }
+
+        function updatePhysioChart(data) {
+            const container = document.getElementById('physioDataContent');
+            const stats = data.statistics || {};
+
+            if (data.data_points === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📈</div>
+                        <p>暂无该时间段的生理数据</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="stats-grid" style="margin-bottom:20px;">
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.avg_hr || 0}</div>
+                        <div class="stat-label">平均心率</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.avg_sdnn || 0}</div>
+                        <div class="stat-label">平均SDNN</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.max_hr || 0}</div>
+                        <div class="stat-label">最高心率</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.min_hr || 0}</div>
+                        <div class="stat-label">最低心率</div>
+                    </div>
+                </div>
+                <p style="color:var(--text-secondary);font-size:13px;text-align:center;">
+                    共 ${data.data_points} 个数据点 | 时间范围: ${data.time_range}
+                </p>`;
+        }
+
+        // Memory Functions
+        async function loadMemoryData() {
+            if (!currentUser) return;
+
+            try {
+                const res = await fetch(
+                    `${API_BASE}/api/v1/web/memory/${currentUser.user_id}`,
+                    { headers: { 'X-Session-ID': sessionId || '' } }
+                );
+                const data = await res.json();
+
+                updateMemoryList(data);
+            } catch (err) {
+                console.error('Load memory error:', err);
+            }
+        }
+
+        function updateMemoryList(data) {
+            const container = document.getElementById('memoryList');
+            const stats = data.stats || {};
+            const memories = data.memories || [];
+
+            document.getElementById('memoryStats').textContent = 
+                `共 ${stats.total_memories || 0} 条记忆`;
+
+            if (memories.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🧠</div>
+                        <p>暂无记忆数据</p>
+                        <p style="font-size:12px;margin-top:10px">与助手对话后，重要信息将被保存</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = memories.map(m => {
+                const score = m.memory_score || 0;
+                const scoreClass = score >= 0.7 ? 'score-high' : 
+                                 score >= 0.4 ? 'score-medium' : 'score-low';
+
+                return `
+                    <div class="memory-item">
+                        <div>${m.content || ''}</div>
+                        <span class="memory-score ${scoreClass}">评分: ${(score * 100).toFixed(0)}%</span>
+                        <div class="memory-time">${m.timestamp || ''} | 角色: ${m.role || ''}</div>
+                    </div>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

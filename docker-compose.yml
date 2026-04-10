@@ -4,8 +4,10 @@ services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8001
       - MQTT_BROKER=mosquitto
       - MQTT_PORT=1883
       - REDIS_URL=redis://redis:6379/0

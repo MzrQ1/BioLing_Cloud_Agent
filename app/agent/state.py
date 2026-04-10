@@ -17,6 +17,7 @@ class InterventionType(str, Enum):
 class HealthState(TypedDict):
     user_id: str
     session_id: str
+    user_input: Optional[str]
 
     raw_sensor_data: Optional[dict]
     processed_features: Optional[dict]
@@ -28,9 +29,6 @@ class HealthState(TypedDict):
     risk_level: RiskLevel
 
     rag_context: Optional[list[dict]]
-    analysis_result: Optional[dict]
-
-    report_content: Optional[str]
     suggestion: Optional[str]
 
     intervention_type: InterventionType
@@ -38,3 +36,9 @@ class HealthState(TypedDict):
 
     next_node: str
     should_continue: bool
+
+    reflection_result: Optional[str]
+
+    query_complexity: Optional[str]
+    model_used: Optional[str]
+    route_reason: Optional[str]

@@ -12,6 +12,7 @@ from .timeseries import TimeSeriesDB
 from .feature_store import FeatureStore
 from .checkpoint_store import CheckpointStore
 from .vector_store import VectorStore
+from .conversation_store import ConversationStore, MemoryScorer, MemoryReflector
 
 __all__ = [
     "init_db",
@@ -26,5 +27,8 @@ __all__ = [
     "TimeSeriesDB",
     "FeatureStore",
     "CheckpointStore",
-    "VectorStore"
+    "VectorStore",
+    "ConversationStore",
+    "MemoryScorer",
+    "MemoryReflector"
 ]

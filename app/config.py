@@ -2,8 +2,16 @@
 import os
 from pathlib import Path
 from typing import Optional, Dict, Any
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    load_dotenv(env_file)
+    print(f"[配置] 已加载环境变量文件: {env_file}")
+else:
+    print(f"[配置] 未找到 .env 文件，使用默认配置")
 
 class LLMConfig:
     """大模型配置"""
@@ -17,6 +25,8 @@ class LLMConfig:
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
     EMBEDDING_API_BASE: str = os.getenv("EMBEDDING_API_BASE", "http://localhost:11434")
     EMBEDDING_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+
+    OLLAMA_LLM_MODEL: str = os.getenv("OLLAMA_LLM_MODEL", "qwen2.5:latest")
 
     TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
     MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "1000"))
@@ -69,10 +79,17 @@ class RAGConfig:
             "rerank_top_k": cls.RERANK_TOP_K
         }
 
+class ServerConfig:
+    """服务配置"""
+    HOST: str = os.getenv("SERVER_HOST", "0.0.0.0")
+    PORT: int = int(os.getenv("SERVER_PORT", "8001"))
+
 class Config:
     MODEL_CACHE_DIR = BASE_DIR / "data" / "models_cache"
     DB_PATH = BASE_DIR / "data" / "db"
     LOG_PATH = BASE_DIR / "data" / "logs"
+
+    SERVER = ServerConfig()
 
     MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
     MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))

@@ -10,10 +10,13 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String(100), unique=True, index=True, nullable=False)
-    username = Column(String(100))
+    username = Column(String(100), unique=True)
     email = Column(String(200))
+    password_hash = Column(String(200))
+    nickname = Column(String(100))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = Column(DateTime)
     is_active = Column(Boolean, default=True)
     settings = Column(Text, default="{}")
 

@@ -1,0 +1,28 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git status*)",
+      "Bash(python scripts/import_knowledge.py *)",
+      "Bash(python scripts/memory_reflection.py *)",
+      "Bash(uvicorn *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{}' | jq -r '.tool_input.command // \"\"' | grep -q '^git commit' && echo '\\n--- 提交后审查摘要 ---' && git diff --stat HEAD~1 && echo '\\n建议: 运行 python scripts/memory_reflection.py 检查记忆状态' || true"
+          }
+        ]
+      }
+    ]
+  }
+}
